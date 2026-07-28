@@ -35,8 +35,9 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: توليد واستبدال أيقونات التطبيق الفاخرة لكل المقاسات
+      - name: تثبيت مكتبة الصور وتوليد الأيقونات
         run: |
+          python3 -m pip install Pillow
           python3 -c "
           from PIL import Image, ImageDraw
           import os
