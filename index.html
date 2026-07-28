@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة الأرباح الصافية - المستثمر الذكي العراقي</title>
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --success: #198754;
+            --danger: #dc3545;
+            --bg: #f4f6f9;
+            --card-bg: #ffffff;
+        }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg); margin: 0; padding: 16px; color: #333; }
+        .card { max-width: 480px; margin: 0 auto; background: var(--card-bg); padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h2 { text-align: center; color: #1e293b; margin-top: 0; font-size: 1.3rem; border-bottom: 2px solid #edf2f7; padding-bottom: 12px; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #475569; }
+        input { width: 100%; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 1rem; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13,110,253,0.15); }
+        .capital-hint { margin-top: 8px; font-size: 0.88rem; font-weight: bold; color: #0d6efd; background: #e7f1ff; padding: 8px 12px; border-radius: 8px; border-right: 4px solid #0d6efd; }
+        .results-box { margin-top: 20px; padding-top: 16px; border-top: 2px dashed #e2e8f0; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.92rem; }
+        .profit-card { padding: 16px; border-radius: 12px; text-align: center; margin: 16px 0; }
+        .profit-card.positive { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .profit-card.negative { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        .profit-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .profit-val { font-size: 1.6rem; font-weight: bold; margin: 4px 0; }
+        .breakeven-box { background: #fff3cd; border: 1px solid #ffecb5; padding: 12px; border-radius: 10px; font-size: 0.88rem; color: #664d03; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>⚙️ حاسبة الأرباح الصافية</h2>
+        
+        <div class="form-group">
+            <label>سعر الشراء للسهم (دينار)</label>
+            <input type="number" id="buyPrice" step="0.001" placeholder="مثال: 4.320" oninput="calc()">
+        </div>
+        
+        <div class="form-group">
+            <label>عدد الأسهم</label>
+            <input type="number" id="shares" step="1" placeholder="مثال: 1000" oninput="calc()">
+            <div id="capitalHint" class="capital-hint" style="display:none;"></div>
+        </div>
+        
+        <div class="form-group">
+            <label>سعر البيع للسهم (دينار)</label>
+            <input type="number" id="sellPrice" step="0.001" placeholder="مثال: 4.380" oninput="calc()">
+        </div>
+        
+        <div class="form-group">
+            <label>نسبة العمولة لكل طرف (%)</label>
+            <input type="number" id="commRate" step="0.01" value="0.6" oninput="calc()">
+        </div>
+        
+        <div class="results-box">
+            <div class="row"><span>قيمة الشراء الإجمالية:</span><strong id="buyVal">0.00 دينار</strong></div>
+            <div class="row"><span>عمولة الشراء:</span><span id="buyComm">0.00 دينار</span></div>
+            <div class="row"><span>قيمة البيع الإجمالية:</span><strong id="sellVal">0.00 دينار</strong></div>
+            <div class="row"><span>عمولة البيع:</span><span id="sellComm">0.00 دينار</span></div>
+            <div class="row" style="font-weight:bold; color:#0f172a;"><span>إجمالي العمولات:</span><span id="totComm">0.00 دينار</span></div>
+            <div class="row"><span>الربح قبل العمولة:</span><span id="grossProfit">0.00 دينار</span></div>
+            
+            <div id="profitCard" class="profit-card positive">
+                <div class="profit-title">الربح الصافي الفعلي (بعد العمولتين)</div>
+                <div id="netProfit" class="profit-val">0.00 دينار</div>
+                <div id="netProfitPct" style="font-size: 0.9rem;">(0.00% من رأس المال)</div>
+            </div>
+            
+            <div class="breakeven-box">
+                <strong>سعر التعادل: <span id="breakeven">0.0000</span> دينار</strong><br>
+                <small>يجب البيع فوق هذا السعر لتحقيق أي ربح فعلي بعد العمولتين.</small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function calc() {
+        const bp = parseFloat(document.getElementById('buyPrice').value) || 0;
+        const sp = parseFloat(document.getElementById('sellPrice').value) || 0;
+        const sh = parseFloat(document.getElementById('shares').value) || 0;
+        const cr = (parseFloat(document.getElementById('commRate').value) || 0) / 100;
+
+        const buyVal = bp * sh;
+        const capitalHint = document.getElementById('capitalHint');
+        if (buyVal > 0) {
+            capitalHint.style.display = 'block';
+            capitalHint.innerHTML = `💡 رأس المال المطلوب للشراء: <b>${buyVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} دينار</b>`;
+        } else {
+            capitalHint.style.display = 'none';
+        }
+
+        const sellVal = sp * sh;
+        const buyComm = buyVal * cr;
+        const sellComm = sellVal * cr;
+        const totComm = buyComm + sellComm;
+        const gross = sellVal - buyVal;
+        const net = gross - totComm;
+        const netPct = buyVal > 0 ? (net / buyVal) * 100 : 0;
+        const breakeven = (1 - cr > 0) ? (bp * (1 + cr)) / (1 - cr) : 0;
+
+        document.getElementById('buyVal').innerText = buyVal.toFixed(2) + ' دينار';
+        document.getElementById('buyComm').innerText = buyComm.toFixed(2) + ' دينار';
+        document.getElementById('sellVal').innerText = sellVal.toFixed(2) + ' دينار';
+        document.getElementById('sellComm').innerText = sellComm.toFixed(2) + ' دينار';
+        document.getElementById('totComm').innerText = totComm.toFixed(2) + ' دينار';
+        document.getElementById('grossProfit').innerText = gross.toFixed(2) + ' دينار';
+        
+        document.getElementById('netProfit').innerText = net.toFixed(2) + ' دينار';
+        document.getElementById('netProfitPct').innerText = `(${netPct.toFixed(2)}% من رأس المال)`;
+        document.getElementById('breakeven').innerText = breakeven.toFixed(4);
+
+        const card = document.getElementById('profitCard');
+        if (net < 0) {
+            card.className = 'profit-card negative';
+        } else {
+            card.className = 'profit-card positive';
+        }
+    }
+    </script>
+</body>
+</html>
