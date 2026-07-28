@@ -35,59 +35,70 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: إنشاء وتطبيق أيقونة التطبيق الأنيقة
+      - name: توليد واستبدال أيقونات التطبيق الفاخرة لكل المقاسات
         run: |
-          mkdir -p android/app/src/main/res/drawable/
-          
-          cat << 'EOF' > android/app/src/main/res/drawable/ic_launcher_background.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp"
-              android:height="108dp"
-              android:viewportWidth="108"
-              android:viewportHeight="108">
-              <path
-                  android:fillColor="#0F172A"
-                  android:pathData="M0,0h108v108h-108z"/>
-              <path
-                  android:fillColor="#1E293B"
-                  android:pathData="M54,54m-44,0a44,44 0 1,0 88,0a44,44 0 1,0 -88,0"/>
-          </vector>
-          EOF
+          python3 -c "
+          from PIL import Image, ImageDraw
+          import os
 
-          cat << 'EOF' > android/app/src/main/res/drawable/ic_launcher_foreground.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp"
-              android:height="108dp"
-              android:viewportWidth="108"
-              android:viewportHeight="108">
-              <!-- هيكل الحاسبة الفاخر -->
-              <path
-                  android:fillColor="#1E293B"
-                  android:pathData="M28,20 h52 a8,8 0 0 1 8,8 v52 a8,8 0 0 1 -8,8 h-52 a8,8 0 0 1 -8,-8 v-52 a8,8 0 0 1 8,-8 z"/>
-              <!-- شاشة العرض العلوية -->
-              <path
-                  android:fillColor="#0F172A"
-                  android:pathData="M34,26 h40 a4,4 0 0 1 4,4 v16 a4,4 0 0 1 -4,4 h-40 a4,4 0 0 1 -4,-4 v-16 a4,4 0 0 1 4,-4 z"/>
-              <!-- سهم النمو الأخضر داخل الشاشة -->
-              <path
-                  android:fillColor="#10B981"
-                  android:pathData="M38,42 L46,35 L53,38 L63,30 L63,35 L66,35 L66,27 L58,27 L58,30 L61,30 L53,36 L46,33 L37,40 z"/>
-              <!-- أزرار الحاسبة الذهبية والزرقاء -->
-              <path android:fillColor="#38BDF8" android:pathData="M34,54 h10 v8 h-10 z"/>
-              <path android:fillColor="#38BDF8" android:pathData="M49,54 h10 v8 h-10 z"/>
-              <path android:fillColor="#F59E0B" android:pathData="M64,54 h10 v8 h-10 z"/>
+          sizes = {
+              'mipmap-mdpi': 48,
+              'mipmap-hdpi': 72,
+              'mipmap-xhdpi': 96,
+              'mipmap-xxhdpi': 144,
+              'mipmap-xxxhdpi': 192
+          }
 
-              <path android:fillColor="#94A3B8" android:pathData="M34,65 h10 v8 h-10 z"/>
-              <path android:fillColor="#94A3B8" android:pathData="M49,65 h10 v8 h-10 z"/>
-              <path android:fillColor="#F59E0B" android:pathData="M64,65 h10 v8 h-10 z"/>
+          def draw_calc_icon(size):
+              img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+              draw = ImageDraw.Draw(img)
+              
+              # خلفية دائرية كحلية فاخرة
+              draw.ellipse([0, 0, size, size], fill=(15, 23, 42, 255))
+              
+              # جسم الحاسبة
+              m = int(size * 0.18)
+              draw.rounded_rectangle([m, m, size - m, size - m], radius=int(size * 0.08), fill=(30, 41, 59, 255))
+              
+              # شاشة الحاسبة
+              s_top, s_bottom = int(size * 0.25), int(size * 0.42)
+              s_left, s_right = int(size * 0.25), int(size * 0.75)
+              draw.rounded_rectangle([s_left, s_top, s_right, s_bottom], radius=int(size * 0.04), fill=(15, 23, 42, 255))
+              
+              # سهم النمو الأخضر
+              green = (16, 185, 129, 255)
+              pts = [(int(size * 0.3), int(size * 0.37)), (int(size * 0.43), int(size * 0.32)), (int(size * 0.53), int(size * 0.35)), (int(size * 0.68), int(size * 0.28))]
+              draw.line(pts, fill=green, width=max(2, int(size * 0.04)))
+              
+              # أزرار الحاسبة
+              b_y = [int(size * 0.48), int(size * 0.60), int(size * 0.72)]
+              b_x = [int(size * 0.26), int(size * 0.44), int(size * 0.62)]
+              bw, bh = int(size * 0.12), int(size * 0.08)
+              
+              colors = [
+                  [(56, 189, 248), (56, 189, 248), (245, 158, 11)],
+                  [(148, 163, 184), (148, 163, 184), (245, 158, 11)],
+                  [(148, 163, 184), (148, 163, 184), (16, 185, 129)]
+              ]
+              
+              for r in range(3):
+                  for c in range(3):
+                      x, y = b_x[c], b_y[r]
+                      col = colors[r][c] + (255,)
+                      h = bh * 2 + int(size * 0.04) if (r == 2 and c == 2) else bh
+                      draw.rounded_rectangle([x, y, x + bw, y + h], radius=int(size * 0.02), fill=col)
+                      
+              return img
 
-              <path android:fillColor="#94A3B8" android:pathData="M34,76 h10 v8 h-10 z"/>
-              <path android:fillColor="#94A3B8" android:pathData="M49,76 h10 v8 h-10 z"/>
-              <path android:fillColor="#10B981" android:pathData="M64,76 h10 v19 h-10 z"/>
-          </vector>
-          EOF
+          base_path = 'android/app/src/main/res'
+          for folder, sz in sizes.items():
+              folder_path = os.path.join(base_path, folder)
+              os.makedirs(folder_path, exist_ok=True)
+              icon_img = draw_calc_icon(sz)
+              icon_img.save(os.path.join(folder_path, 'ic_launcher.png'))
+              icon_img.save(os.path.join(folder_path, 'ic_launcher_round.png'))
+              icon_img.save(os.path.join(folder_path, 'ic_launcher_foreground.png'))
+          "
 
       - name: منح صلاحية التنفيذ لـ gradlew
         run: chmod +x android/gradlew
