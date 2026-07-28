@@ -1,0 +1,8 @@
+{
+  "appId": "com.smartinvestor.iqcalc",
+  "appName": "حاسبة الأرباح الصافية",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
